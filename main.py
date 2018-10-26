@@ -1,7 +1,7 @@
 import re
 
 from statemachine import statemachine as fsm
-import timer
+from utilities import timer
 
 
 key_words = {
@@ -12,24 +12,26 @@ key_words = {
 numbers = re.compile("([0-9]+)")
 
 
-def start_transitions(txt):
+def start_transitions(txt, verbose=None):
     splitted_txt = txt.split(maxsplit=1)
     word, txt = splitted_txt if len(splitted_txt) > 1 else (txt, "")
     word = word.lower()
     if word in key_words:
         new_state = "article_state"
-        # print(word, end=" ")
+        if verbose:
+            print(word, end=" ")
     else:
         new_state = "start_state"
     return new_state, txt
 
 
-def article_state_transitions(txt):
+def article_state_transitions(txt, verbose=None):
     splitted_txt = txt.split(maxsplit=1)
     word, txt = splitted_txt if len(splitted_txt) > 1 else (txt, "")
     if numbers.match(word.lower()) is not None:
         new_state = "pos_state"
-        # print(word)
+        if verbose:
+            print(word)
     else:
         new_state = "error_state"
     return new_state, txt
@@ -86,7 +88,7 @@ def test_real_case(sm, file_name, end=None):
                     break
 
 
-def test_regexp(file_name, end=None):
+def test_regexp(file_name, end=None, verbose=None):
     counter = 0
 
     regex = r"((стат)(ьей|ьёй|ью|ьям|ье|ьях|ьи|ья|ей|ьями)?|(ст)(\.))\s([0-9]+)"
@@ -97,9 +99,9 @@ def test_regexp(file_name, end=None):
             if not line:
                 continue
             matches = re.finditer(regex, line, flags=re.IGNORECASE)
-            for match_num, match in enumerate(matches):
-                pass
-                # print(f"Match {match_num + 1} was found at {match.start()}-{match.end()}: {match.group()}")
+            if verbose:
+                for match_num, match in enumerate(matches):
+                    print(f"Match {match_num + 1} was found at {match.start()}-{match.end()}: {match.group()}")
             if end:
                 counter += 1
                 if counter == end:
@@ -107,7 +109,7 @@ def test_regexp(file_name, end=None):
 
 
 def init_state_machine():
-    state_machine = fsm.StateMachine()
+    state_machine = fsm.StateMachine(verbose=False)
 
     state_machine.add_state("start_state", start_transitions)
     state_machine.add_state("article_state", article_state_transitions)
@@ -123,17 +125,17 @@ def init_state_machine():
 def main():
     sm = init_state_machine()
 
-    # test_find_1(sm)
-    # test_find_2(sm)
-    # test_find_3(sm)
-    # test_find_4(sm)
-    # test_find_5(sm)
-    # test_find_6(sm)
+    test_find_1(sm)
+    test_find_2(sm)
+    test_find_3(sm)
+    test_find_4(sm)
+    test_find_5(sm)
+    test_find_6(sm)
 
-    # test_not_find(sm)
+    test_not_find(sm)
 
-    # test_reached_error_1(sm)
-    # test_reached_error_2(sm)
+    test_reached_error_1(sm)
+    test_reached_error_2(sm)
 
     file_name = "1 АС 897 решений за июль 2016.txt"
     # with timer.Timer(f"Test real case document {file_name}",

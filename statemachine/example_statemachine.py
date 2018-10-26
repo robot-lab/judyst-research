@@ -1,4 +1,4 @@
-from statemachine import statamachine as fsm
+from statemachine import statemachine as fsm
 
 
 positive_adjectives = ["great", "super", "fun", "entertaining", "easy"]
