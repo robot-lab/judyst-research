@@ -1,14 +1,14 @@
 import re
 
 from statemachine import statemachine as fsm
-from timer import Timer
+import timer
 
 
-key_words = [
+key_words = {
     "статья", "статьи", "статье", "статью", "статьей", "статьёй",
     "статьи", "статей", "стаьям", "статьями", "статьях",
     "ст."
-]
+}
 numbers = re.compile("([0-9]+)")
 
 
@@ -18,7 +18,7 @@ def start_transitions(txt):
     word = word.lower()
     if word in key_words:
         new_state = "article_state"
-        print(word, end=" ")
+        # print(word, end=" ")
     else:
         new_state = "start_state"
     return new_state, txt
@@ -29,7 +29,7 @@ def article_state_transitions(txt):
     word, txt = splitted_txt if len(splitted_txt) > 1 else (txt, "")
     if numbers.match(word.lower()) is not None:
         new_state = "pos_state"
-        print(word)
+        # print(word)
     else:
         new_state = "error_state"
     return new_state, txt
@@ -96,9 +96,10 @@ def test_regexp(file_name, end=None):
             line = line.strip()
             if not line:
                 continue
-            matches = re.finditer(regex, line)
+            matches = re.finditer(regex, line, flags=re.IGNORECASE)
             for match_num, match in enumerate(matches):
-                print(f"Match {match_num + 1} was found at {match.start()}-{match.end()}: {match.group()}")
+                pass
+                # print(f"Match {match_num + 1} was found at {match.start()}-{match.end()}: {match.group()}")
             if end:
                 counter += 1
                 if counter == end:
@@ -114,7 +115,7 @@ def init_state_machine():
     state_machine.add_state("error_state", None, end_state=True)
 
     state_machine.set_start("start_state")
-    state_machine.set_error("error_state")
+    state_machine.set_error_end("error_state")
 
     return state_machine
 
@@ -135,11 +136,18 @@ def main():
     # test_reached_error_2(sm)
 
     file_name = "1 АС 897 решений за июль 2016.txt"
-    # with Timer(f"Test real case document {file_name}"):
-    #    test_real_case(sm, file_name)
+    # with timer.Timer(f"Test real case document {file_name}",
+    #                  logging_level=timer.LOGGING_LEVEL_ALL):
+    #     test_real_case(sm, file_name)
+    timer_ = timer.RepeatedTimer(f"Test real case document {file_name}",
+                                 file_name="result.log", accuracy=4,
+                                 logging_level=timer.LOGGING_LEVEL_FILE)
+    timer_.run({test_real_case: [sm, file_name]}, n_times=10)
 
-    with Timer(f"Test real case document {file_name}"):
-        test_regexp(file_name)
+    # with timer.Timer(f"Test real case document {file_name}",
+    #                  logging_level=timer.LOGGING_LEVEL_ALL):
+    #     test_regexp(file_name)
+    timer_.run({test_regexp: [file_name]}, n_times=10)
 
 
 if __name__ == "__main__":
