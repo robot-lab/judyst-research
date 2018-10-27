@@ -1,0 +1,4 @@
+Decision files\КСРФ_1177-О_2018.txt
+Decision files\КСРФ_2841-О_2017.txt
+Decision files\КСРФ_332-О_2003.txt
+Decision files\КСРФ_П-Р3-1_1992.txt
