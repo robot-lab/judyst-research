@@ -1,5 +1,7 @@
 import re
 
+import re2
+
 from statemachine import statemachine as fsm
 from utilities import timer
 
@@ -73,8 +75,8 @@ def test_reached_error_2(sm):
     sm.run("здесь находится только статья без номера сразу, но номер 42 есть далее")
 
 
-def test_real_case(sm, file_name, end=None):
-    counter = 0
+def test_real_case(sm, file_name, n_lines=None):
+    lines_counter = 0
 
     with open(file_name, "r", encoding="utf-8") as file_in:
         for line in file_in:
@@ -82,14 +84,14 @@ def test_real_case(sm, file_name, end=None):
             if not line:
                 continue
             sm.run(line)
-            if end:
-                counter += 1
-                if counter == end:
+            if n_lines:
+                lines_counter += 1
+                if lines_counter == n_lines:
                     break
 
 
-def test_regexp(file_name, end=None, verbose=None):
-    counter = 0
+def test_re(file_name, n_lines=None, verbose=None):
+    lines_counter = 0
 
     regex = r"((стат)(ьей|ьёй|ью|ьям|ье|ьях|ьи|ья|ей|ьями)?|(ст)(\.))\s([0-9]+)"
 
@@ -102,9 +104,29 @@ def test_regexp(file_name, end=None, verbose=None):
             if verbose:
                 for match_num, match in enumerate(matches):
                     print(f"Match {match_num + 1} was found at {match.start()}-{match.end()}: {match.group()}")
-            if end:
-                counter += 1
-                if counter == end:
+            if n_lines:
+                lines_counter += 1
+                if lines_counter == n_lines:
+                    break
+
+
+def test_re2(file_name, n_lines=None, verbose=None):
+    lines_counter = 0
+
+    regex = r"((стат)(ьей|ьёй|ью|ьям|ье|ьях|ьи|ья|ей|ьями)?|(ст)(\.))\s([0-9]+)"
+
+    with open(file_name, "r", encoding="utf-8") as file_in:
+        for line in file_in:
+            line = line.strip()
+            if not line:
+                continue
+            matches = re2.finditer(regex, line, flags=re.IGNORECASE)
+            if verbose:
+                for match_num, match in enumerate(matches):
+                    print(f"Match {match_num + 1} was found at {match.start()}-{match.end()}: {match.group()}")
+            if n_lines:
+                lines_counter += 1
+                if lines_counter == n_lines:
                     break
 
 
@@ -142,14 +164,12 @@ def main():
     #                  logging_level=timer.LOGGING_LEVEL_ALL):
     #     test_real_case(sm, file_name)
     timer_ = timer.RepeatedTimer(f"Test real case document {file_name}",
-                                 file_name="result.log", accuracy=4,
+                                 file_name="results.log", accuracy=4,
                                  logging_level=timer.LOGGING_LEVEL_FILE)
-    timer_.run({test_real_case: [sm, file_name]}, n_times=10)
 
-    # with timer.Timer(f"Test real case document {file_name}",
-    #                  logging_level=timer.LOGGING_LEVEL_ALL):
-    #     test_regexp(file_name)
-    timer_.run({test_regexp: [file_name]}, n_times=10)
+    timer_.run({test_real_case: [sm, file_name]}, n_times=10)
+    timer_.run({test_re: [file_name]}, n_times=10)
+    timer_.run({test_re2: [file_name]}, n_times=10)
 
 
 if __name__ == "__main__":
