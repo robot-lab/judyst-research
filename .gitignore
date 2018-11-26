@@ -6,6 +6,11 @@ __pycache__/
 # C extensions
 *.so
 
+#Decision Files
+Decision Files/*
+*.pickle
+*.json
+
 # Distribution / packaging
 .Python
 build/
