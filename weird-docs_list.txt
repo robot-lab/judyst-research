@@ -1,0 +1,5 @@
+Decision files\КСРФ_1177-О_2018.txt: ()
+Decision files\КСРФ_137-О_2001.txt: ('постановил', 'определил')
+Decision files\КСРФ_2627-О_2015.txt: ('постановляет', 'определил')
+Decision files\КСРФ_4-О_2000.txt: ()
+Decision files\КСРФ_8-Р_1992.txt: ()
