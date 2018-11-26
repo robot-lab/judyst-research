@@ -6,7 +6,6 @@ run.cmd
 Decision files0/
 Decision Files/*
 *.pickle
-*.json
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
