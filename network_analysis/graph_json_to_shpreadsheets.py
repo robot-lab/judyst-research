@@ -56,7 +56,7 @@ def save_csv_betwenese_part():
     f.close()
 
 
-def sace_csv_all_graph():
+def save_csv_all_graph():
     f = open('graph.json', 'rt', encoding='utf-8')
     s = f.read()
     graph = json.loads(s)
@@ -74,4 +74,5 @@ def sace_csv_all_graph():
     
 
 if __name__ == '__main__':
-   save_csv_betwenese_part()
+#    save_csv_betwenese_part()
+    save_csv_all_graph()
