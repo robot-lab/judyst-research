@@ -12,9 +12,6 @@ from deeppavlov.core.data.utils import zero_pad
 from itertools import chain
 from deeppavlov.core.data.data_learning_iterator import DataLearningIterator
 from deeppavlov.models.preprocessors.mask import Mask
-from file_parser import repl
-import re
-
 
 def get_embeddings(indices, vocabulary_size, emb_dim):
     # Initialize the random gaussian matrix with dimensions [vocabulary_size, embedding_dimension]
