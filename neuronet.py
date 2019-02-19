@@ -4,6 +4,7 @@ import tensorflow as tf
 from deeppavlov.core.data.simple_vocab import SimpleVocabulary
 from deeppavlov.dataset_readers.conll2003_reader import Conll2003DatasetReader
 from deeppavlov.metrics.fmeasure import precision_recall_f1
+from tensorflow.python.saved_model import tag_constants
 # The function precision_recall_f1 takes two lists: y_true and y_predicted
 # the tag sequences for each sentences should be merged into one big list
 from deeppavlov.core.data.utils import zero_pad
@@ -12,7 +13,7 @@ from deeppavlov.core.data.utils import zero_pad
 from itertools import chain
 from deeppavlov.core.data.data_learning_iterator import DataLearningIterator
 from deeppavlov.models.preprocessors.mask import Mask
-from file_parser import repl
+# from file_parser import repl
 import re
 
 
@@ -143,8 +144,9 @@ class NerNetwork:
         self.sess.run(self.train_op, feed_dict)
 
 
-#здесь я указывала абсолютный путь к директории data
-dataset = Conll2003DatasetReader().read('C:\\Users\\stron\\PycharmProjects\\word2vec\\data')
+
+
+dataset = Conll2003DatasetReader().read('.\\data')
 get_mask = Mask()
 data_iterator = DataLearningIterator(dataset)
 
@@ -167,7 +169,7 @@ batch_size = 2
 n_epochs = 3
 learning_rate = 0.001
 dropout_keep_prob = 0.5
-
+saver = tf.train.Saver()
 # train network:
 for k in range(n_epochs):
     for x, y in data_iterator.gen_batches(batch_size, 'train'):
@@ -185,6 +187,9 @@ for k in range(n_epochs):
     print(k, " epoch ended")
     print('Evaluating the model on valid part of the dataset')
     f1 = eval_valid(nernet, data_iterator.gen_batches(300, 'valid', shuffle=False))
+save_path = saver.save(nernet.sess, "./model.ckpt")
+
+
 
 #example of using neuronet to extract entityties
 # sentence = 'о разъяснении Определения Конституционного Суда Российской Федерации от 24 марта 2015 года № 720-О город Санкт-Петербург'
@@ -194,4 +199,4 @@ for k in range(n_epochs):
 # mask = get_mask(x)
 # y_inds = nernet(x_batch, mask)
 # for token,tag in zip(x[0],tag_vocab(y_inds)[0]):
-#     print(token + " : " + tag)
+#     print(token + " : " + tag)    

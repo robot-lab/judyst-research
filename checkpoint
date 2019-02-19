@@ -1,2 +1,2 @@
-model_checkpoint_path: "C:\\Users\\stron\\PycharmProjects\\word2vec\\save_module"
-all_model_checkpoint_paths: "C:\\Users\\stron\\PycharmProjects\\word2vec\\save_module"
+model_checkpoint_path: "model.ckpt"
+all_model_checkpoint_paths: "model.ckpt"
