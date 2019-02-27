@@ -144,52 +144,112 @@ class NerNetwork:
         self.sess.run(self.train_op, feed_dict)
 
 
+def train_and_save(save_path = "./model.ckpt"):
+    dataset = Conll2003DatasetReader().read('.\\data')
+    get_mask = Mask()
+    data_iterator = DataLearningIterator(dataset)
+
+    special_tokens = ['<UNK>']
+    token_vocab = SimpleVocabulary(special_tokens, save_path='model/token.dict')
+    tag_vocab = SimpleVocabulary(save_path='model/tag.dict')
+
+    all_tokens_by_sentences = [tokens for tokens, tags in dataset['train']]
+    all_tags_by_sentences = [tags for tokens, tags in dataset['train']]
+
+    token_vocab.fit(all_tokens_by_sentences)
+    tag_vocab.fit(all_tags_by_sentences)
+
+    nernet = NerNetwork(len(token_vocab),
+                        len(tag_vocab),
+                        n_hidden_list=[50, 50, 50, 50],
+                        cnn_filter_width=9)
+
+    batch_size = 2
+    n_epochs = 3
+    learning_rate = 0.001
+    dropout_keep_prob = 0.5
+    saver = tf.train.Saver()
+    # train network:
+    for k in range(n_epochs):
+        for x, y in data_iterator.gen_batches(batch_size, 'train'):
+            # Convert tokens to indices via Vocab
+            x_inds = token_vocab(x)
+            # Convert tags to indices via Vocab
+            y_inds = tag_vocab(y)
+
+            # Pad every sample with zeros to the maximal length
+            x_batch = zero_pad(x_inds)
+            y_batch = zero_pad(y_inds)
+
+            mask = get_mask(x)
+            nernet.train_on_batch(x_batch, y_batch, mask, dropout_keep_prob, learning_rate)
+        print(k, " epoch ended")
+        print('Evaluating the model on valid part of the dataset')
+        f1 = eval_valid(nernet, data_iterator.gen_batches(300, 'valid', shuffle=False))
+    save_path = saver.save(nernet.sess, save_path)
+    print(f"Model saved in {save_path}")
 
 
-dataset = Conll2003DatasetReader().read('.\\data')
-get_mask = Mask()
-data_iterator = DataLearningIterator(dataset)
+def restore(path="./model.ckpt", data_path='.\\data'):
+    get_mask = Mask()
+    tf.reset_default_graph()
+    dataset = Conll2003DatasetReader().read(data_path)
+    special_tokens = ['<UNK>']
+  
+    all_tokens_by_sentences = [tokens for tokens, tags in dataset['train']]
+    all_tags_by_sentences = [tags for tokens, tags in dataset['train']]
+    token_vocab = SimpleVocabulary(special_tokens, save_path='model/token.dict')
+    tag_vocab = SimpleVocabulary(save_path='model/tag.dict')
+    token_vocab.fit(all_tokens_by_sentences)
+    tag_vocab.fit(all_tags_by_sentences)
 
-special_tokens = ['<UNK>']
-token_vocab = SimpleVocabulary(special_tokens, save_path='model/token.dict')
-tag_vocab = SimpleVocabulary(save_path='model/tag.dict')
-
-all_tokens_by_sentences = [tokens for tokens, tags in dataset['train']]
-all_tags_by_sentences = [tags for tokens, tags in dataset['train']]
-
-token_vocab.fit(all_tokens_by_sentences)
-tag_vocab.fit(all_tags_by_sentences)
-
-nernet = NerNetwork(len(token_vocab),
-                    len(tag_vocab),
-                    n_hidden_list=[50, 50, 50, 50],
-                    cnn_filter_width=9)
-
-batch_size = 2
-n_epochs = 3
-learning_rate = 0.001
-dropout_keep_prob = 0.5
-saver = tf.train.Saver()
-# train network:
-for k in range(n_epochs):
-    for x, y in data_iterator.gen_batches(batch_size, 'train'):
-        # Convert tokens to indices via Vocab
-        x_inds = token_vocab(x)
-        # Convert tags to indices via Vocab
-        y_inds = tag_vocab(y)
-
-        # Pad every sample with zeros to the maximal length
-        x_batch = zero_pad(x_inds)
-        y_batch = zero_pad(y_inds)
-
-        mask = get_mask(x)
-        nernet.train_on_batch(x_batch, y_batch, mask, dropout_keep_prob, learning_rate)
-    print(k, " epoch ended")
-    print('Evaluating the model on valid part of the dataset')
-    f1 = eval_valid(nernet, data_iterator.gen_batches(300, 'valid', shuffle=False))
-save_path = saver.save(nernet.sess, "./model.ckpt")
+    nernet = NerNetwork(len(token_vocab),
+                        len(tag_vocab),
+                        n_hidden_list=[50, 50, 50, 50],
+                        cnn_filter_width=9)
+    # Add ops to save and restore all the variables.
+    saver = tf.train.Saver()
+    saver.restore(nernet.sess, path)
+    print("Model restored.")
+    # Check the values of the variables
+    print("Check model:")
+    sentence = 'о разъяснении Определения Конституционного Суда Российской Федерации от 24 марта 2015 года № 720-О город Санкт-Петербург'
+    x = [sentence.split()]
+    x_inds = token_vocab(x)
+    x_batch = zero_pad(x_inds)
+    mask = get_mask(x)
+    y_inds = nernet(x_batch, mask)
+    for token, tag in zip(x[0],tag_vocab(y_inds)[0]):
+        print(token + " : " + tag)
+    return nernet, get_mask, token_vocab, tag_vocab
 
 
+def check_text(text, nernet, get_mask, token_vocab, tag_vocab):
+    x = [text.split()]
+    x_inds = token_vocab(x)
+    x_batch = zero_pad(x_inds)
+    mask = get_mask(x)
+    y_inds = nernet(x_batch, mask)
+    links = []
+    # collection  = list(zip(x[0], tag_vocab(y_inds)[0]))
+    # n = len(collection)
+    # i = 0
+    # while i < n:
+    #     if (len(collection[i]) < 2):
+    #         continue
+    #     token = collection[i][0]
+    #     tag = collection[i][1]
+    #     i+=1
+    #     if tag == 'O':
+    #         continue
+    #     link = ""
+    #     while i < n and tag != 'O':
+    #         link += ' ' + token
+    #         token = collection[i][0]
+    #         tag = collection[i][1]
+    #         i += 1
+    #     links.append(link)
+    return links
 
 #example of using neuronet to extract entityties
 # sentence = 'о разъяснении Определения Конституционного Суда Российской Федерации от 24 марта 2015 года № 720-О город Санкт-Петербург'
@@ -200,3 +260,14 @@ save_path = saver.save(nernet.sess, "./model.ckpt")
 # y_inds = nernet(x_batch, mask)
 # for token,tag in zip(x[0],tag_vocab(y_inds)[0]):
 #     print(token + " : " + tag)    
+
+
+
+if __name__ == "__main__":
+    model_path=".\\judyst-research\\model.ckpt"
+    data_path = '.\\judyst-research\\data'
+   
+    nernet, get_mask, token_vocab, tag_vocab = restore(model_path, data_path)
+    text = 'о разъяснении Определения Конституционного Суда Российской Федерации от 24 марта 2015 года № 720-О город Санкт-Петербург'
+    res = check_text(text, nernet, get_mask, token_vocab, tag_vocab)
+    print(res)
